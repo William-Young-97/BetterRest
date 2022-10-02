@@ -2,19 +2,29 @@
 //  ContentView.swift
 //  BetterRest
 //
-//  Created by EngineerBetter on 01/10/2022.
+//  Created by William Young on 01/10/2022.
 //
 import CoreML
 import SwiftUI
 
 struct ContentView: View {
-    @State private var sleepAmount = 8.0
-    @State private var wakeUp = defaultWakeTime
-    @State private var coffeeAmount = 1
+    @State private var sleepAmount = 8.0 {
+        didSet {
+            sleepTime = calculateBedtime()
+        }
+    }
+    @State private var wakeUp = defaultWakeTime {
+        didSet {
+            sleepTime = calculateBedtime()
+        }
+    }
+    @State private var coffeeAmount = 1 {
+        didSet {
+           sleepTime = calculateBedtime()
+        }
+    }
     
-    @State private var alertTitle = ""
-    @State private var alertMessage = ""
-    @State private var showingAlert = false
+    @State private var sleepTime = ""
     
     static var defaultWakeTime: Date {
         var components = DateComponents()
@@ -50,20 +60,18 @@ struct ContentView: View {
                         }
                     }
                 }
+                
+                Section {
+                    Text("Your reccomended bedtime is:")
+                        .font(.headline)
+                    Text("\(calculateBedtime())")
+                }
             }
             .navigationTitle("BetterRest")
-            .toolbar {
-                Button("Calculate", action: calculateBedtime)
-            }
-            .alert(alertTitle, isPresented: $showingAlert) {
-                Button("OK") {}
-            } message: {
-                Text(alertMessage)
-            }
         }
     }
     
-    func calculateBedtime() {
+    func calculateBedtime()-> String {
         do {
             let config = MLModelConfiguration()
             let model = try SleepCalculater(configuration: config)
@@ -75,14 +83,11 @@ struct ContentView: View {
             let prediction = try model.prediction(wake: Double(hour + minute), estimatedSleep: sleepAmount, coffee: Double(coffeeAmount))
             
             let sleepTime = wakeUp - prediction.actualSleep
-            alertTitle = "Your ideal bedtime is..."
-            alertMessage = sleepTime.formatted(date: .omitted, time: .shortened)
+            return sleepTime.formatted(date: .omitted, time: .shortened)
         } catch {
-            alertTitle = "Error"
-            alertMessage = "Something went wrong :/"
+            sleepTime = "Something went wrong :/"
         }
-        
-        showingAlert = true
+        return sleepTime
     }
 }
 
